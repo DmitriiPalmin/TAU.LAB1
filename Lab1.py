@@ -6,6 +6,9 @@ import math as m
 import colorama as color
 
 # выбор звена
+container = dict()
+container = {1: "Безынерционное звено", 2: "Апериодическое звено", 3: "Интегрирующее звено", 4: "Дифференциальное звено", 5: "Реальное дифференциальное звено"}
+
 def choice():
     inertialess_Unit_name = 'Безынерционное звено'
     aperiodic_Unit_name = 'Апериодическое звено'
