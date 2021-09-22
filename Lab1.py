@@ -54,7 +54,7 @@ def getUnit(name):
             elif name == container_name[3]:
                 unit = matlab.tf([1], [t, 0])
             elif name == container_name[4]:
-                unit = matlab.tf([k, 0], [1])
+                unit = matlab.tf([k, 0], [0.00000000001, 1])
             elif name == container_name[5]:
                 unit = matlab.tf([k, 0], [t, 1])
 
@@ -68,28 +68,28 @@ def getUnit(name):
 unit_name = choice()
 unit = getUnit(unit_name)
 
-# def graph(num, title, y, x):
-#     pyplot.subplot(2,1, num)
-#     pyplot.grid(True)
-#     if title == 'Переходная характеристика':
-#         pyplot.plot(x, y, 'purple')
-#     elif title == 'Импульсная характеристика':
-#         pyplot.plot(x, y, 'green')
-#     pyplot.title(title)
-#     pyplot.ylabel('Амплитуда')
-#     pyplot.xlabel('Время (с)')
+def graph(num, title, y, x):
+    pyplot.subplot(2,1, num)
+    pyplot.grid(True)
+    if title == 'Переходная характеристика':
+        pyplot.plot(x, y, 'purple')
+    elif title == 'Импульсная характеристика':
+        pyplot.plot(x, y, 'green')
+    pyplot.title(title)
+    pyplot.ylabel('Амплитуда')
+    pyplot.xlabel('Время (с)')
 #
 #
 #
 #
-# timeLine = []
-# for i in range(0, 10000):
-#     timeLine.append(i/1000)
-#
-# [y, x] = matlab.step(unit, timeLine)
-# graph(1, 'Переходная характеристика', y, x )
-# [y, x] = matlab.impulse(unit, timeLine)
-#
-# graph(2, 'Импульсная характеристика', y, x )
-#
-# pyplot.show()
+timeLine = []
+for i in range(0, 10000):
+    timeLine.append(i/1000)
+
+[y, x] = matlab.step(unit, timeLine)
+graph(1, 'Переходная характеристика', y, x )
+[y, x] = matlab.impulse(unit, timeLine)
+
+graph(2, 'Импульсная характеристика', y, x )
+
+pyplot.show()
