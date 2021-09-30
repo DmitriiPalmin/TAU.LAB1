@@ -98,7 +98,7 @@ unit_name = choice()
 unit = getUnit(unit_name)
 
 x_Line = []
-for i in range(5, 10000):
+for i in range(0, 10000):
     x_Line.append(i/1000)
 
 [y, x] = matlab.step(unit, x_Line)
