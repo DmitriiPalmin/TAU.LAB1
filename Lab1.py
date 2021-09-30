@@ -35,6 +35,7 @@ def choice():
 
     return container_name[user_input]
 
+#  Запрос коэффициентов
 def getUnit(name):
     k = input("Введите коэффициент k: ")
     t = input("Введите коэффициент t: ")
@@ -47,6 +48,7 @@ def getUnit(name):
             k = int(k)
             t = int(t)
             need_new_choice = False
+            #  Сосотавляем передаточную функцию в зависимости от выбранного звена
             if name == container_name[1]:
                 unit = matlab.tf([k], [1])
             elif name == container_name[2]:
@@ -54,7 +56,7 @@ def getUnit(name):
             elif name == container_name[3]:
                 unit = matlab.tf([1], [t, 0])
             elif name == container_name[4]:
-                unit = matlab.tf([k, 0], [0.00000000001, 1])
+                unit = matlab.tf([k, 0], [1e-10, 1])
             elif name == container_name[5]:
                 unit = matlab.tf([k, 0], [t, 1])
 
@@ -65,38 +67,48 @@ def getUnit(name):
         print(unit)
     return unit
 
-unit_name = choice()
-unit = getUnit(unit_name)
-
-def graph(num, title, y1, y2, x):
-    pyplot.subplot(2,1, num)
+# Построение графиков
+def graph(title, y, x):
+    ampl = 'Амплитуда'
+    time = 'Время (с)'
+    fr = ('Частота (рад/с)')
+    pyplot.figure()
     pyplot.grid(True)
     if title == 'Переходная характеристика':
-        pyplot.plot(x, y1, 'purple')
+        pyplot.plot(x, y, 'purple')
+        pyplot.ylabel(ampl)
+        pyplot.xlabel(time)
     elif title == 'Импульсная характеристика':
-        pyplot.plot(x, y1, 'green')
-    elif title == 'Боде':
-        pyplot.plot(x, y1, 'blue')
-        pyplot.plot(x, y2, 'red')
+        pyplot.plot(x, y, 'green')
+        pyplot.ylabel(ampl)
+        pyplot.xlabel(time)
+    elif title == 'АЧХ':
+        pyplot.plot(x, y, 'blue')
+        pyplot.ylabel(ampl)
+        pyplot.xlabel(fr)
+    elif title == 'ФЧХ':
+        pyplot.plot(x, y, 'red')
+        pyplot.ylabel('Фаза')
+        pyplot.xlabel(fr)
     pyplot.title(title)
-    pyplot.ylabel('Амплитуда')
-    pyplot.xlabel('Время (с)')
-#
-#
-#
-#
-timeLine = []
-for i in range(0, 10000):
-    timeLine.append(i/1000)
 
-[y, x] = matlab.step(unit, timeLine)
-graph(1, 'Переходная характеристика', y,0, x )
-[y, x] = matlab.impulse(unit, timeLine)
 
-graph(2, 'Импульсная характеристика', y, 0, x )
+unit_name = choice()
 
-mag, phase, omega = matlab.bode(unit, timeLine)
+unit = getUnit(unit_name)
 
-graph(2, 'Боде', mag, phase, omega)
-# pyplot.plot()
+x_Line = []
+for i in range(5, 10000):
+    x_Line.append(i/1000)
+
+[y, x] = matlab.step(unit, x_Line)
+graph('Переходная характеристика', y, x)
+
+[y, x] = matlab.impulse(unit, x_Line)
+graph('Импульсная характеристика', y, x)
+
+mag, phase, omega = matlab.freqresp(unit, x_Line)
+graph('АЧХ', mag, omega)
+graph('ФЧХ', phase, omega)
+
 pyplot.show()
