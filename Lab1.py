@@ -127,47 +127,41 @@ def tregACH(magList):
     return treg
 
 
-def kolebACH(magList, ust):
-    i = 1
+def kolebACH(magList):
+    # i = 1
     maxMag = magList[0]
     for i in range(len(magList)):
         if magList[i] >= magList[i-1]:
             maxMag = magList[i]
-    M = maxMag/ust
+    M = maxMag/magList[0]
     return M
 
 # ЛАЧХ и ЛФЧХ
-def LACH(wFunctionList, wNameList):
+def LACH(w, wNameList):
     magList = []
     omegaList = []
     phaseList = []
     magListF = []
     omegaListF = []
     phaseListF = []
-    for i in wFunctionList:
-        mag, phase, omega = c.bode(i, dB=True)
-        k = 0
-        j = 0
-        for j in range(len(mag)):
-            magList.append(20*(math.log10(mag[j])))
-            omegaList.append(omega[j]/(2*math.pi))
-            phaseList.append(math.degrees(phase[j]))
-        plt.legend(wNameList, fontsize=10)
-        plt.plot()
-        plt.show()
+    # for i in wFunctionList:
+    mag, phase, omega = c.bode(w, dB=True)
+    for j in range(len(mag)):
+        magList.append(20*(math.log10(mag[j])))
+        omegaList.append(omega[j]/(2*math.pi))
+        phaseList.append(math.degrees(phase[j]))
+    plt.legend(wNameList, fontsize=10)
+    plt.plot()
+    plt.show()
     omegaListF.append(omegaList)
     magListF.append(magList)
     phaseListF.append(phaseList)
+
     return omegaListF, magListF, phaseListF
 
 
 def zapasL(omegaList, magList, phaseList):
     maxMag = magList[0]
-    for i in range(len(magList)):
-        if magList[i]>=maxMag:
-            maxMag = magList[i]
-            indexMaxMag = i
-    j = indexMaxMag
     for j in range(len(magList)):
         if (magList[j] <= 0) and (magList[j-1] >= 0):
             y2 = phaseList[j]
@@ -230,17 +224,16 @@ def int_err(y, ust, dt):
 
 
 def treg_h(y, x, ust, dot):
-    granica1 = ust + (ust * dot)
-    granica2 = ust - (ust * dot)
+    gr1 = ust + (ust * dot)
+    gr2 = ust - (ust * dot)
     lastY = 0.0
     lastX = 0.0
     lastYList = []
     lastXList = []
-    j=1
     for i in range(len(x)):
         for j in range(len(y[i])):
-            if ((y[i][j-1] >= granica1) and (y[i][j] <= granica1)) \
-                    or ((y[i][j-1] <= granica2) and (y[i][j] >= granica2)):
+            if ((y[i][j-1] >= gr1) and (y[i][j] <= gr1)) \
+                    or ((y[i][j-1] <= gr2) and (y[i][j] >= gr2)):
                 lastY = y[i][j]
                 lastX = x[i][j]
         lastYList.append(lastY)
@@ -262,7 +255,7 @@ def perereg_h(y, ust):
 def koleb_h(yPerehHar, xPerehHar, treg):
     kMax = 0
     kMaxList = []
-    j = 1
+
     for i in range(len(yPerehHar)):
         for j in range(len(yPerehHar[i])):
             if (xPerehHar[i][j] == treg):
@@ -278,7 +271,7 @@ def koleb_h(yPerehHar, xPerehHar, treg):
 def zatuh_f(y, x, treg):
     yMaxList = []
     zatuhList = []
-    j = 1
+
     for i in range(len(y)):
         for j in range(len(y[i])):
             if (x[i][j] == treg):
@@ -300,7 +293,7 @@ def max_f(yPerehHar, xPerehHar):
     tMaxList = []
     yMaxList = []
     yMax = 0.0
-    j = 1
+
     for i in range(len(yPerehHar)):
         for j in range(len(yPerehHar[i])):
             if (yPerehHar[i][j] > yMax):
@@ -312,7 +305,6 @@ def max_f(yPerehHar, xPerehHar):
 
 def tregroot(roots):
     reKorni = []
-    j = 1
     for i in roots:
         reKorni.append(re(i))
     for j in range(len(reKorni)):
@@ -322,37 +314,28 @@ def tregroot(roots):
     return treg
 
 def kolebroot(korni):
-    i = 1
+    imk = []
+    rek = []
+    max = abs(im(korni[0]) / re(korni[0]))
     for i in range(len(korni)):
-        if (abs(korni[i]) >= abs(korni[i-1])):
-            maxkoren = korni[i]
-    remaxkoren = re(maxkoren)
-    immaxkoren = im(maxkoren)
-    stepenkoleb = math.tan(math.radians(abs(immaxkoren)/abs(remaxkoren)))
-    return stepenkoleb
+        imk.append(im(korni[i]))
+        rek.append(re(korni[i]))
+    max = abs(imk[0]/rek[0])
+    for j in range(len(korni)):
+        g = abs((imk[j]/rek[j]))
+        print (g)
+        if max < g:
+            max = g
 
-def pereregroot(korni):
-    maxkoren = korni[0]
-    i = 1
-    for i in range(len(korni)):
-        if (abs(korni[i]) >= abs(korni[i-1])):
-            maxkoren = korni[i]
-    remaxkoren = re(maxkoren)
-    immaxkoren = im(maxkoren)
-    stepenkoleb = abs(immaxkoren/remaxkoren)
-    sigma = math.e**((math.pi)/stepenkoleb)
+    return max
+
+def pereregroot(sk):
+    sigma = math.e**((math.pi)/sk)
     return sigma
 
-def zatuhroot(korni):
-    maxkoren = korni[0]
-    i = 1
-    for i in range(len(korni)):
-        if (abs(korni[i]) >= abs(korni[i-1])):
-            maxkoren = korni[i]
-    remaxkoren = re(maxkoren)
-    immaxkoren = im(maxkoren)
-    stepenkoleb = math.tan(math.radians(abs(immaxkoren)/abs(remaxkoren)))
-    stepzatuh = 1 - math.e**((-2*math.radians(math.pi))/stepenkoleb)
+def zatuhroot(sk):
+
+    stepzatuh = 1 - math.e**((-2*(math.pi))/sk)
     return stepzatuh
 
 
@@ -366,8 +349,8 @@ w3 = c.tf([ky],[Ty,1])
 wraz = c.series(w1,w2,w3)
 
 # task = choice()
-task=1
-wReg = PIDReg(0.7, 0.0061, 0.69)
+task=2
+wReg = PIDReg(0.9, 0.006, 0.90)
 # wReg = PDReg(1, 1.3)
 
 W = CAY([w1, w2, w3], wReg)
@@ -394,20 +377,20 @@ if task == 2:
 
     roots = root_f(W, map=true)
 
-    omegaListF, magListF, phaseListF = LACH([W], ["W(p)"])
+    omegaListF, magListF, phaseListF = LACH(W, ["W(p)"])
     zapasL(omegaListF[0], magListF[0], phaseListF[0])
     magListFACH = ACH([W], ["W(P)"])
     tregACH = tregACH(magListFACH[0])
     print("Время регулирования по АЧХ = ", tregACH)
-    kolebM = kolebACH(magListFACH[0], 0.95)
+    kolebM = kolebACH(magListFACH[0])
     print("Показатель колебательности М = ", kolebM)
     treg = tregroot(roots)
     print("Время регулирования по корням= ", treg)
     kolebr = kolebroot(roots)
     print("Степень колебательности по корням= ", kolebr)
-    sigma = pereregroot(roots)
-    print("Перерегулирование переходной характеристики по корням< ", sigma)
-    zatuhr = zatuhroot(roots)
+    sigma = pereregroot(kolebr)
+    print("Перерегулирование переходной характеристики по корням= ", sigma)
+    zatuhr = zatuhroot(kolebr)
     print("Степень затухания по корням= ",zatuhr)
 
 
