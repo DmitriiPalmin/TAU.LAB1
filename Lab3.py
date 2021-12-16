@@ -96,16 +96,12 @@ def step(wFunctionList, wNameList):
     plt.vlines(26, 0, y[590]+0.05, color='b', linewidth=0.75, linestyle='-')
     plt.hlines(y[590]+0.05, 0, 60, color='g', linewidth=0.5, linestyle='--')
     plt.hlines(y[590]-0.05, 0, 60, color='g', linewidth=0.5, linestyle='--')
-    # plt.hlines(1, 0, 60, color='r', linewidth=0.5, linestyle='-')
-    # plt.vlines(26, 0, 1.05, color='b', linewidth=0.75, linestyle='-')
-    # plt.hlines(1.05, 0, 60, color='g', linewidth=0.5, linestyle='--')
-    # plt.hlines(0.95, 0, 60, color='g', linewidth=0.5, linestyle='--')
     plt.legend(wNameList, fontsize=10)
     plt.title('Переходная характеристика ')
     plt.ylabel('Амплитуда', fontsize=10, color='black')
     plt.xlabel('Время(сек)', fontsize=8, color='black')
     plt.grid()
-    # plt.show()
+    plt.show()
     return yPerehHar, xPerehHar
 
 # АЧХ
@@ -128,7 +124,6 @@ def tregACH(magList):
 
 
 def kolebACH(magList):
-    # i = 1
     maxMag = magList[0]
     for i in range(len(magList)):
         if magList[i] >= magList[i-1]:
@@ -310,6 +305,7 @@ def tregroot(roots):
     for j in range(len(reKorni)):
         if (abs(reKorni[j]) <= abs(reKorni[j-1])):
             reKorniMin = reKorni[j]
+
     treg = 3/(abs(reKorniMin))
     return treg
 
@@ -323,7 +319,6 @@ def kolebroot(korni):
     max = abs(imk[0]/rek[0])
     for j in range(len(korni)):
         g = abs((imk[j]/rek[j]))
-        print (g)
         if max < g:
             max = g
 
@@ -348,8 +343,8 @@ w2 = c.tf([Tgm*0.01,1],[Tg*0.05,1])
 w3 = c.tf([ky],[Ty,1])
 wraz = c.series(w1,w2,w3)
 
-# task = choice()
-task=2
+task = choice()
+# task=2
 wReg = PIDReg(0.9, 0.006, 0.90)
 # wReg = PDReg(1, 1.3)
 
