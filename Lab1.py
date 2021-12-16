@@ -4,7 +4,28 @@ import sys
 import numpy as np
 from sympy import *
 import math
+import colorama as color
 
+def choice():
+
+    need_new_choice = True
+
+    while need_new_choice:
+
+        print(color.Style.RESET_ALL)
+
+        user_input = input('Введите номер команды: \n'
+                        '1 - Переходная характеристика;\n' 
+                        '2 - Остальное;\n' )
+        # Проверяем, число ли было введено
+
+        if not user_input.isdigit() or int(user_input)>2 or int(user_input) == 0:
+            print(color.Fore.RED + '\nНедопустимое значение')
+        else:
+            user_input = int(user_input)
+            need_new_choice = False
+
+    return user_input
 
 # Пропорциональный регулятор
 def PReg(Kp):
@@ -58,7 +79,7 @@ def CAY(wFunctionList, wReg):
     return w
 
 
-def perehodnay(wFunctionList, wNameList):
+def step(wFunctionList, wNameList):
     f = True
     yPerehHar = []
     xPerehHar = []
@@ -71,19 +92,20 @@ def perehodnay(wFunctionList, wNameList):
         plt.plot(x, y)
         yPerehHar.append(y)
         xPerehHar.append(x)
-        # for i in range(len(yPerehHar)):
-        #     for j in range(len(yPerehHar[i])):
-        #         print(yPerehHar[i][j], "-", xPerehHar[i][j], "\n")
-    plt.vlines(13, 0, 1.05, color='b', linewidth=0.75, linestyle='-')
-    plt.hlines(1, 0, 60, color='r', linewidth=0.5, linestyle='-')
-    plt.hlines(1.05, 0, 60, color='g', linewidth=0.5, linestyle='--')
-    plt.hlines(0.95, 0, 60, color='g', linewidth=0.5, linestyle='--')
-    plt.legend(wNameList, fontsize=10, shadow=True)
+    plt.hlines(y[590], 0, 60, color='r', linewidth=0.5, linestyle='-')
+    plt.vlines(26, 0, y[590]+0.05, color='b', linewidth=0.75, linestyle='-')
+    plt.hlines(y[590]+0.05, 0, 60, color='g', linewidth=0.5, linestyle='--')
+    plt.hlines(y[590]-0.05, 0, 60, color='g', linewidth=0.5, linestyle='--')
+    # plt.hlines(1, 0, 60, color='r', linewidth=0.5, linestyle='-')
+    # plt.vlines(26, 0, 1.05, color='b', linewidth=0.75, linestyle='-')
+    # plt.hlines(1.05, 0, 60, color='g', linewidth=0.5, linestyle='--')
+    # plt.hlines(0.95, 0, 60, color='g', linewidth=0.5, linestyle='--')
+    plt.legend(wNameList, fontsize=10)
     plt.title('Переходная характеристика ')
     plt.ylabel('Амплитуда', fontsize=10, color='black')
     plt.xlabel('Время(сек)', fontsize=8, color='black')
     plt.grid()
-    plt.show()
+    # plt.show()
     return yPerehHar, xPerehHar
 
 # АЧХ
@@ -105,13 +127,13 @@ def tregACH(magList):
     return treg
 
 
-def pokazatelkolebACH(magList, ustavka):
+def kolebACH(magList, ust):
     i = 1
     maxMag = magList[0]
     for i in range(len(magList)):
         if magList[i] >= magList[i-1]:
             maxMag = magList[i]
-    M = maxMag/ustavka
+    M = maxMag/ust
     return M
 
 # ЛАЧХ и ЛФЧХ
@@ -130,7 +152,7 @@ def LACH(wFunctionList, wNameList):
             magList.append(20*(math.log10(mag[j])))
             omegaList.append(omega[j]/(2*math.pi))
             phaseList.append(math.degrees(phase[j]))
-        plt.legend(wNameList, fontsize=10, shadow=True)
+        plt.legend(wNameList, fontsize=10)
         plt.plot()
         plt.show()
     omegaListF.append(omegaList)
@@ -139,7 +161,7 @@ def LACH(wFunctionList, wNameList):
     return omegaListF, magListF, phaseListF
 
 
-def zapasustoichivostiLachLfch(omegaList, magList, phaseList):
+def zapasL(omegaList, magList, phaseList):
     maxMag = magList[0]
     for i in range(len(magList)):
         if magList[i]>=maxMag:
@@ -148,15 +170,10 @@ def zapasustoichivostiLachLfch(omegaList, magList, phaseList):
     j = indexMaxMag
     for j in range(len(magList)):
         if (magList[j] <= 0) and (magList[j-1] >= 0):
-            # x2 = omegaList[j]
-            # x1 = omegaList[j-1]
             y2 = phaseList[j]
-            # y1 = phaseList[j-1]
-            # z2 = magList[j]
-            # z1 = magList[j-1]
             break
-    fase = 180 - abs(y2)
-    print("Запас устойчивости по фазе через ЛАЧХ и ЛФЧХ = ",fase)
+    phase = 180 - abs(y2)
+    print("Запас устойчивости по фазе через ЛАЧХ и ЛФЧХ = ",phase)
     k = 0
     for i in range(len(phaseList)):
         if phaseList[i] == 180:
@@ -171,7 +188,7 @@ def zapasustoichivostiLachLfch(omegaList, magList, phaseList):
 
 
 # проверка по корням и расположение корней на комплексной плоскости
-def pokorn(w, map=False):
+def root_f(w, map=False) -> object:
     korni = []
     f = 0
     s = c.pole(w)
@@ -196,51 +213,53 @@ def pokorn(w, map=False):
         plt.show()
     return korni
 
-def ikvosh(yPerehHar, ustavka, dt):
-    I1List=[]
-    I2List = []
+def int_err(y, ust, dt):
+    I1_List = []
+    I2_List = []
     I1 = 0
     I2 = 0
-    for i in yPerehHar:
+    for i in y:
         for j in i:
-            I1 = sqrt((ustavka-j)*(ustavka-j))*dt + I1      #интегральная ошибка
-            I2 = (ustavka - j) * (ustavka - j) * dt + I2    #квадратичная интегральная ошибка
-        I1List.append(I1)
-        I2List.append(I2)
-    return I1List, I2List
+            # интегральная ошибка
+            I1 = sqrt((ust-j)*(ust-j))*dt + I1
+            # квадратичная интегральная ошибка
+            I2 = (ust - j) * (ust - j) * dt + I2
+        I1_List.append(I1)
+        I2_List.append(I2)
+    return I1_List, I2_List
 
 
-def tregpereh(yPerehHar, xPerehHar, ustavka, toch):
-    granica1 = ustavka + (ustavka * toch)
-    granica2 = ustavka - (ustavka * toch)
+def treg_h(y, x, ust, dot):
+    granica1 = ust + (ust * dot)
+    granica2 = ust - (ust * dot)
     lastY = 0.0
     lastX = 0.0
     lastYList = []
     lastXList = []
     j=1
-    for i in range(len(xPerehHar)):
-        for j in range(len(xPerehHar[i])):
-            if ((yPerehHar[i][j-1] >= granica1) and (yPerehHar[i][j] <= granica1)) \
-                    or ((yPerehHar[i][j-1] <= granica2) and (yPerehHar[i][j] >= granica2)):
-                lastY = yPerehHar[i][j]
-                lastX = xPerehHar[i][j]
+    for i in range(len(x)):
+        for j in range(len(y[i])):
+            if ((y[i][j-1] >= granica1) and (y[i][j] <= granica1)) \
+                    or ((y[i][j-1] <= granica2) and (y[i][j] >= granica2)):
+                lastY = y[i][j]
+                lastX = x[i][j]
         lastYList.append(lastY)
         lastXList.append(lastX)
     return lastYList, lastXList
 
-def pereregpereh(yPerehHar, ustavka):
+def perereg_h(y, ust):
     maxY = 0.0
-    pereregulirovanieList = []
-    for i in yPerehHar:
+    perereg_List = []
+    for i in y:
         for j in i:
             if (j >= maxY):
                 maxY = j
-        pereregulirovanie = (maxY - ustavka)/(ustavka)
-        pereregulirovanie = pereregulirovanie*100
-        pereregulirovanieList.append(pereregulirovanie)
-    return pereregulirovanieList
+        perereg = (maxY - ust)/(ust)
+        perereg = perereg*100
+        perereg_List.append(perereg)
+    return perereg_List
 
-def kolebatelnostpereh(yPerehHar, xPerehHar, treg):
+def koleb_h(yPerehHar, xPerehHar, treg):
     kMax = 0
     kMaxList = []
     j = 1
@@ -251,30 +270,33 @@ def kolebatelnostpereh(yPerehHar, xPerehHar, treg):
             if (yPerehHar[i][j] > yPerehHar[i][j - 1]) and (yPerehHar[i][j] > yPerehHar[i][j + 1]):
                 kMax+=1
         kMaxList.append(kMax)
+        if len(kMaxList) > 1:
+            g = kMaxList[0]/kMaxList[1]
+            print (g)
     return kMaxList
 
-def stepenzatuhaniya(yPerehHar, xPerehHar, treg):
+def zatuh_f(y, x, treg):
     yMaxList = []
-    stepenzatuhaniyaList = []
+    zatuhList = []
     j = 1
-    for i in range(len(yPerehHar)):
-        for j in range(len(yPerehHar[i])):
-            if (xPerehHar[i][j] == treg):
+    for i in range(len(y)):
+        for j in range(len(y[i])):
+            if (x[i][j] == treg):
                 break
-            if (yPerehHar[i][j] > yPerehHar[i][j - 1]) and (yPerehHar[i][j] > yPerehHar[i][j + 1]):
-                yMax = yPerehHar[i][j]
+            if (y[i][j] > y[i][j - 1]) and (y[i][j] > y[i][j + 1]):
+                yMax = y[i][j]
                 yMaxList.append(yMax)
         yMaxList.append(0)
         if yMaxList[1] != 0:
-            stepenzatuhaniya = (yMaxList[1]-yMaxList[0])/(yMaxList[1])
-            stepenzatuhaniyaList.append(abs(stepenzatuhaniya))
+            zatuh = (yMaxList[1]-yMaxList[0])/(yMaxList[1])
+            zatuhList.append(abs(zatuh))
         else:
-            stepenzatuhaniya = 1
-            stepenzatuhaniyaList.append(stepenzatuhaniya)
-    return stepenzatuhaniyaList
+            zatuh = 1
+            zatuhList.append(zatuh)
+    return zatuhList
 
 
-def yMaxtMax(yPerehHar, xPerehHar):
+def max_f(yPerehHar, xPerehHar):
     tMaxList = []
     yMaxList = []
     yMax = 0.0
@@ -288,10 +310,10 @@ def yMaxtMax(yPerehHar, xPerehHar):
     yMaxList.append(yMax)
     return yMaxList, tMaxList
 
-def tregkorni(korni):
+def tregroot(roots):
     reKorni = []
     j = 1
-    for i in korni:
+    for i in roots:
         reKorni.append(re(i))
     for j in range(len(reKorni)):
         if (abs(reKorni[j]) <= abs(reKorni[j-1])):
@@ -299,7 +321,7 @@ def tregkorni(korni):
     treg = 3/(abs(reKorniMin))
     return treg
 
-def stepenkolebkorni(korni):
+def kolebroot(korni):
     i = 1
     for i in range(len(korni)):
         if (abs(korni[i]) >= abs(korni[i-1])):
@@ -309,7 +331,7 @@ def stepenkolebkorni(korni):
     stepenkoleb = math.tan(math.radians(abs(immaxkoren)/abs(remaxkoren)))
     return stepenkoleb
 
-def pereregkorni(korni):
+def pereregroot(korni):
     maxkoren = korni[0]
     i = 1
     for i in range(len(korni)):
@@ -321,7 +343,7 @@ def pereregkorni(korni):
     sigma = math.e**((math.pi)/stepenkoleb)
     return sigma
 
-def stepzatuhkorni(korni):
+def zatuhroot(korni):
     maxkoren = korni[0]
     i = 1
     for i in range(len(korni)):
@@ -334,59 +356,61 @@ def stepzatuhkorni(korni):
     return stepzatuh
 
 
-ky = 22.0
-Tg = 5.0
-Ty = 4.0
-Tgm = 1.0
+ky = 20.0
+Tg = 10.0
+Ty = 5.0
+Tgm = 2.0
 w1 = c.tf([1],[Tg,1])
-print("Wг = ", w1)
-w2=c.tf([Tgm*0.01,1],[Tg*0.05,1])
-print("Wпт = ", w2)
+w2 = c.tf([Tgm*0.01,1],[Tg*0.05,1])
 w3 = c.tf([ky],[Ty,1])
-print("Wиу = ", w3)
-w = c.series(w1,w2,w3)
-# W = CAY([w1, w2, w3], wReg=PIDReg(1,0,0))
-# print("W(p) = ", W)
-# yPerehHarW, xPerehHarW = perehodnay([W], ["W(p)"])
-# omegaListF, magListF, phaseListF = LACH([W], ["W(p)"])
-# korniW = pokorn(W, map=true)
-W = CAY([w1, w2, w3], wReg=PIDReg(0.2506, 0.03488, 0.3259))
+wraz = c.series(w1,w2,w3)
+
+# task = choice()
+task=1
+wReg = PIDReg(0.7, 0.0061, 0.69)
+# wReg = PDReg(1, 1.3)
+
+W = CAY([w1, w2, w3], wReg)
 print("W(p) = ", W)
-yPerehHarW, xPerehHarW = perehodnay([W], ["W(p)"])
-I1, I2 = ikvosh(yPerehHarW, 1, 0.05)
-print("Интегральная ошибка I1= ", I1[0], "\nКвадратичная интегральная ошибка I2= ", I2[0])
-lastYW, lastXW = tregpereh(yPerehHarW, xPerehHarW, 1, 0.05)
-print("tрег= ", lastXW[0])
-pereregulirovanie = pereregpereh(yPerehHarW, 1)
-print("Перерегулирование= ", pereregulirovanie[0], "%")
-kolebatelnostperehW = kolebatelnostpereh(yPerehHarW, xPerehHarW, lastXW[0])
-print("Колебательность= ", kolebatelnostperehW[0])
-stepenzatuhaniya = stepenzatuhaniya(yPerehHarW, xPerehHarW, lastXW[0])
-print("Степень затухания= ", stepenzatuhaniya[0])
-yMax, tMax = yMaxtMax(yPerehHarW, xPerehHarW)
-print("Величина достижения первого максимума= ", yMax[0])
-print("Время достижения первого максимума= ", tMax[0])
+if task == 1:
+    yh, xh = step([W], ["W(p)"])
+    y = yh[0]
+    I1, I2 = int_err(yh, y[599], 0.05)
 
-omegaListF, magListF, phaseListF = LACH([W], ["W(p)"])
-zapasustoichivostiLachLfch(omegaListF[0], magListF[0], phaseListF[0])
-magListFACH = ACH([W], ["W(P)"])
-tregACH = tregACH(magListFACH[0])
-print("treg по ACH = ", tregACH)
-pokazatelkolebM = pokazatelkolebACH(magListFACH[0], 1)
-print("Показатель колебательности М = ", pokazatelkolebM)
-korniW = pokorn(W, map=true)
-treg = tregkorni(korniW)
-print("Время регулирования по корням= ", treg)
-stepenkoleb = stepenkolebkorni(korniW)
-print("Степень колебательности по корням= ", stepenkoleb)
-sigma = pereregkorni(korniW)
-print("Перерегулирование переходной характеристики по корням< ", sigma)
-stepzatuhkorniW = stepzatuhkorni(korniW)
-print("Степень затухания по корням= ",stepzatuhkorniW)
+    print("Интегральная ошибка I1= ", I1[0], "\n"
+         "Квадратичная интегральная ошибка I2= ", I2[0])
+    lastYW, lastXW = treg_h(yh, xh, y[599], 0.05)
+    print("tрег= ", lastXW[0])
+    perereg = perereg_h(yh, 1)
+    print("Перерегулирование = ", perereg[0], "%")
+    koleb = koleb_h (yh, xh, lastXW[0])
+    print("Колебательность = ", koleb[0])
+    zatuh = zatuh_f(yh, xh, lastXW[0])
+    print("Степень затухания = ", zatuh[0])
+    yMax, tMax = max_f(yh, xh)
+    print("Величина достижения первого максимума = ", yMax[0])
+    print("Время достижения первого максимума = ", tMax[0])
+if task == 2:
+
+    roots = root_f(W, map=true)
+
+    omegaListF, magListF, phaseListF = LACH([W], ["W(p)"])
+    zapasL(omegaListF[0], magListF[0], phaseListF[0])
+    magListFACH = ACH([W], ["W(P)"])
+    tregACH = tregACH(magListFACH[0])
+    print("Время регулирования по АЧХ = ", tregACH)
+    kolebM = kolebACH(magListFACH[0], 0.95)
+    print("Показатель колебательности М = ", kolebM)
+    treg = tregroot(roots)
+    print("Время регулирования по корням= ", treg)
+    kolebr = kolebroot(roots)
+    print("Степень колебательности по корням= ", kolebr)
+    sigma = pereregroot(roots)
+    print("Перерегулирование переходной характеристики по корням< ", sigma)
+    zatuhr = zatuhroot(roots)
+    print("Степень затухания по корням= ",zatuhr)
 
 
-# W2 = CAY([w1, w2, w3], wReg=PReg(0.2725))
-# W1 = CAY([w1, w2, w3], wReg=PReg(0.4525))
-# yPerehHarW1W2W3 = perehodnay([W1, W2], ["W1(p)", "W2(p)"])
+
 
 
